@@ -22,17 +22,25 @@ let people = [
         number: "39-23-6423122",
         id: 4
     }
-]
+];
 
 app.get('/', (req, res) => {
     res.send('<h1>Puhelinluettelo</h1>');
-})
+});
+
+app.get('/info', (req, res) => {
+    const len = people.length;
+    const date = new Date();
+
+    res.send(`<p>Phonebook has info for ${len} people</p>
+        <div>${date}</div>`);
+});
 
 app.get('/api/persons', (req, res) => {
     res.json(people);
-})
+});
 
 const PORT = 3001;
 app.listen(PORT, () => {
-    console.log(`Server running in port ${PORT}`)
-})
+    console.log(`Server running in port ${PORT}`);
+});
