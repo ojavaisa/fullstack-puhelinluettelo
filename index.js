@@ -1,6 +1,8 @@
 const express = require('express');
 const app = express();
 
+app.use(express.json());
+
 let people = [
     {
         name: "Arto Hellas",
@@ -56,6 +58,29 @@ app.delete('/api/persons/:id', (req, res) => {
     people = people.filter(person => person.id !== id);
 
     res.status(204).end();
+});
+
+app.post('/api/persons', (req, res) => {
+    const body = req.body;
+
+    if(!body.name || !body.number) {
+        return res.status(400).json({
+            error: 'info missing'
+        })
+    }
+    
+    //const id = Math.floor(Math.random() * 9999999);
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: Math.floor(Math.random() * 9999999)
+    }
+    
+    console.log(person);
+
+    people = people.concat(person);
+
+    res.json(person);
 });
 
 const PORT = 3001;
