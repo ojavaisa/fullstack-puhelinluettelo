@@ -1,9 +1,18 @@
 const express = require('express');
-var morgan = require('morgan')
+var morgan = require('morgan');  //middleware for logging site requests
 const app = express();
 
 app.use(express.json());
-app.use(morgan('tiny'));
+
+morgan.token('content', (req, res) => { //custom token to log request body
+    return JSON.stringify(req.body);
+});
+//use morgan with format that is essentially (predefined format) 'tiny' + custom token from above
+//logging is printed to stdout = console log
+app.use(
+    morgan(
+        ':method :url :status :res[content-length] - :response-time ms :content'
+    ));
 
 let people = [
     {
