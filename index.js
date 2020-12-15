@@ -1,7 +1,10 @@
 const express = require('express');
-var morgan = require('morgan');  //middleware for logging site requests
+const morgan = require('morgan');  //middleware for logging site requests
+const cors = require('cors');
+
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 morgan.token('content', (req, res) => { //custom token to log request body
