@@ -2,7 +2,7 @@ POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {
-    "content": "Esko oli kiki"
+    "content": "Testi"
 }
 
 ###
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 {
     "name": "Mauri Ernesti",
-    "number": "123456789"
+    "number": "123-456-789"
 }
 
 ###
@@ -23,4 +23,22 @@ Content-Type: application/json
 {
     "name": "Ada Lovelace",
     "number": "123456789"
+}
+
+###
+POST https://shielded-ridge-17530.herokuapp.com/api/persons
+Content-Type: application/json
+
+{
+    "content": "Testi"
+}
+
+###
+
+POST https://shielded-ridge-17530.herokuapp.com/api/persons
+Content-Type: application/json
+
+{
+    "name": "Mauri Ernesti",
+    "number": "123-456-789"
 }
