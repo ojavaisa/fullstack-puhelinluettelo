@@ -88,7 +88,6 @@ app.post('/api/persons', (req, res) => {
         });
     }
 
-    //const id = Math.floor(Math.random() * 9999999);
     const person = {
         name: body.name,
         number: body.number,
@@ -101,7 +100,7 @@ app.post('/api/persons', (req, res) => {
     res.json(person);
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
     console.log(`Server running in port ${PORT}`);
 });
