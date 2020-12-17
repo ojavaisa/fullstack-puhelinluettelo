@@ -67,12 +67,7 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({
             error: 'info missing'
         });
-    } /* else if (people.find(person => person.name === body.name)) {
-        //if find returns a person, it already exists and is "truthy", otherwise undefined i.e. false
-        return res.status(406).json({
-            error: 'name must be unique'
-        });
-    } */
+    }
 
     const person = new Person({
         name: body.name,
@@ -82,6 +77,27 @@ app.post('/api/persons', (req, res) => {
     person.save().then(savedPerson => {
         res.json(savedPerson);
     });
+});
+
+app.put('/api/persons/:id', (req, res, next) => {
+    const body = req.body;
+
+    if (!body.number) { // this is still not working correctly
+        return res.status(400).send({
+            error: 'info missing'
+        });
+    }
+
+    const person = {
+        name: body.name,
+        number: body.number,
+    };
+
+    Person.findByIdAndUpdate(req.params.id, person, { new: true})
+        .then(updatedPerson => {
+            res.json(updatedPerson);
+        })
+        .catch(error => next(error));
 });
 
 const unknownEndpoint = (req, res) => { // middleware to handle all unknown addresses (i.e. all addresses not handled above)
