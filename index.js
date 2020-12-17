@@ -1,14 +1,15 @@
 require('dotenv').config(); // get MongoDB URI as an environment variable, required for ./models/person.js 
+const { response } = require('express');
 const express = require('express');
 const morgan = require('morgan');  // middleware for logging site requests
-const cors = require('cors');
+//const cors = require('cors');   // middleware that allows frontend and backend to be from different origins
 const Person = require('./models/person');  // handle MongoDB operations in a separate module
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+//app.use(cors());
 app.use(express.static('build'));
+app.use(express.json());
 
 morgan.token('content', (req, res) => { // custom token to log request body
     return JSON.stringify(req.body);
@@ -33,30 +34,29 @@ app.get('/info', (req, res) => { // not yet done
 });
 
 app.get('/api/persons', (req, res) => {
-    Person.find({}).then(people => {
+    Person.find({}).then(people => { // empty find returns all documents
         res.json(people);
     });
 });
 
 app.get('/api/persons/:id', (req, res) => {
     Person.findById(req.params.id).then(person => {
-        res.json(person);
-    });
-    /* const id = Number(req.params.id);
-    const person = people.find(person => person.id === id);
+        if (person) {
+            res.json(person);
+        } else {    // if id is not of any document in db (but is formatted correctly), null is returned
+            res.status(404).end();
+        }
+    })
+        .catch(error => next(error)); // if id is formatted wrong, the promise is rejected. pass error to error handler middleware
 
-    if (person) {
-        res.json(person);
-    } else {
-        res.status(404).end();
-    } */
 });
 
-app.delete('/api/persons/:id', (req, res) => { // not yet done
-    const id = Number(req.params.id);
-    people = people.filter(person => person.id !== id);
-
-    res.status(204).end();
+app.delete('/api/persons/:id', (req, res, next) => {
+    Person.findByIdAndRemove(req.params.id)
+        .then(result => {
+            res.status(204).end(); // if document with id removed or not found return same status
+        })
+        .catch(error => next(error)); // pass errors to handler
 });
 
 app.post('/api/persons', (req, res) => {
@@ -82,6 +82,22 @@ app.post('/api/persons', (req, res) => {
         res.json(savedPerson);
     });
 });
+
+const unknownEndpoint = (req, res) => { // middleware to handle all unknown addresses (i.e. all addresses not handled above)
+    res.status(404).send({ error: 'unknown endpoint' });
+};
+app.use(unknownEndpoint);
+
+const errorHandler = (error, req, res, next) => { // middleware to handle bad requests
+    console.log(error.message);
+
+    if (error.name === 'CastError') { // check if error is from id not compatible with MongoDB id's
+        return response.status(400).send({ error: 'malformatted id' });
+    }
+
+    next(error);    // if error is none of the above cases pass to Express default error handler
+};
+app.use(errorHandler);
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
