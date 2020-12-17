@@ -1,6 +1,8 @@
+require('dotenv').config(); // get MongoDB URI as an environment variable, required for ./models/person.js 
 const express = require('express');
-const morgan = require('morgan');  //middleware for logging site requests
+const morgan = require('morgan');  // middleware for logging site requests
 const cors = require('cors');
+const Person = require('./models/person');  // handle MongoDB operations in a separate module
 
 const app = express();
 
@@ -8,44 +10,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('build'));
 
-morgan.token('content', (req, res) => { //custom token to log request body
+morgan.token('content', (req, res) => { // custom token to log request body
     return JSON.stringify(req.body);
 });
-//use morgan with format that is essentially (predefined format) 'tiny' + custom token from above
-//logging is printed to stdout = console log
+// use morgan with format that is essentially (predefined format) 'tiny' + custom token from above
+// logging is printed to stdout = console log
 app.use(
     morgan(
         ':method :url :status :res[content-length] - :response-time ms :content'
     ));
 
-let people = [
-    {
-        name: "Arto Hellas",
-        number: "040-123456",
-        id: 1
-    },
-    {
-        name: "Ada Lovelace",
-        number: "39-44-5323523",
-        id: 2
-    },
-    {
-        name: "Dan Abramov",
-        number: "12-43-234345",
-        id: 3
-    },
-    {
-        name: "Mary Poppendieck",
-        number: "39-23-6423122",
-        id: 4
-    }
-];
+/* app.get('/', (req, res) => { // this is no longer required, handled by frontend
+    res.send('<h1>Phonebook</h1>');
+}); */
 
-app.get('/', (req, res) => {
-    res.send('<h1>Puhelinluettelo</h1>');
-});
-
-app.get('/info', (req, res) => {
+app.get('/info', (req, res) => { // not yet done
     const len = people.length;
     const date = new Date();
 
@@ -54,21 +33,26 @@ app.get('/info', (req, res) => {
 });
 
 app.get('/api/persons', (req, res) => {
-    res.json(people);
+    Person.find({}).then(people => {
+        res.json(people);
+    });
 });
 
 app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id);
+    Person.findById(req.params.id).then(person => {
+        res.json(person);
+    });
+    /* const id = Number(req.params.id);
     const person = people.find(person => person.id === id);
 
     if (person) {
         res.json(person);
     } else {
         res.status(404).end();
-    }
+    } */
 });
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res) => { // not yet done
     const id = Number(req.params.id);
     people = people.filter(person => person.id !== id);
 
@@ -82,26 +66,24 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({
             error: 'info missing'
         });
-    } else if (people.find(person => person.name === body.name)) {
+    } /* else if (people.find(person => person.name === body.name)) {
         //if find returns a person, it already exists and is "truthy", otherwise undefined i.e. false
         return res.status(406).json({
             error: 'name must be unique'
         });
-    }
+    } */
 
-    const person = {
+    const person = new Person({
         name: body.name,
-        number: body.number,
-        id: Math.floor(Math.random() * 9999999)
-    };
+        number: body.number
+    });
 
-    //console.log(person);
-    people = people.concat(person);
-
-    res.json(person);
+    person.save().then(savedPerson => {
+        res.json(savedPerson);
+    });
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server running in port ${PORT}`);
 });
