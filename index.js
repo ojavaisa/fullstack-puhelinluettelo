@@ -34,19 +34,20 @@ app.get('/info', (req, res) => { // not yet done
 });
 
 app.get('/api/persons', (req, res) => {
-    Person.find({}).then(people => { // empty find returns all documents
+    Person.find({}).then(people => { // empty find method returns all documents
         res.json(people);
     });
 });
 
-app.get('/api/persons/:id', (req, res) => {
-    Person.findById(req.params.id).then(person => {
-        if (person) {
-            res.json(person);
-        } else {    // if id is not of any document in db (but is formatted correctly), null is returned
-            res.status(404).end();
-        }
-    })
+app.get('/api/persons/:id', (req, res, next) => {
+    Person.findById(req.params.id)
+        .then(person => {
+            if (person) {
+                res.json(person);
+            } else {    // if id is not of any document in db (but is formatted correctly), null is returned
+                res.status(404).end();
+            }
+        })
         .catch(error => next(error)); // if id is formatted wrong, the promise is rejected. pass error to error handler middleware
 
 });
@@ -89,10 +90,10 @@ const unknownEndpoint = (req, res) => { // middleware to handle all unknown addr
 app.use(unknownEndpoint);
 
 const errorHandler = (error, req, res, next) => { // middleware to handle bad requests
-    console.log(error.message);
+    console.error(error.message);
 
     if (error.name === 'CastError') { // check if error is from id not compatible with MongoDB id's
-        return response.status(400).send({ error: 'malformatted id' });
+        return res.status(400).send({ error: 'malformatted id' });
     }
 
     next(error);    // if error is none of the above cases pass to Express default error handler
