@@ -21,11 +21,7 @@ app.use(
         ':method :url :status :res[content-length] - :response-time ms :content'
     ));
 
-/* app.get('/', (req, res) => { // this is no longer required, handled by frontend
-    res.send('<h1>Phonebook</h1>');
-}); */
-
-app.get('/info', (req, res) => { // not yet done
+app.get('/info', (req, res) => { 
     const len = people.length;
     const date = new Date();
 
