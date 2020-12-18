@@ -21,21 +21,21 @@ app.use(
         ':method :url :status :res[content-length] - :response-time ms :content'
     ));
 
-app.get('/info', (req, res, next) => { 
+app.get('/info', (req, res, next) => {
     //const len = Person.countDocuments({});
     const date = new Date();
     Person.countDocuments({}).then(len => {
         res.send(`<p>Phonebook has info for ${len} people</p>
-        <div>${date}</div>`); 
+        <div>${date}</div>`);
     })
-    .catch(error => next(error));
+        .catch(error => next(error));
 });
 
 app.get('/api/persons', (req, res, next) => {
     Person.find({}).then(people => { // empty find method returns all documents
         res.json(people);
     })
-    .catch(error => next(error));
+        .catch(error => next(error));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -62,12 +62,6 @@ app.delete('/api/persons/:id', (req, res, next) => {
 app.post('/api/persons', (req, res, next) => {
     const body = req.body;
 
-    if (!body.name || !body.number) {
-        return res.status(400).json({
-            error: 'info missing'
-        });
-    }
-
     const person = new Person({
         name: body.name,
         number: body.number
@@ -76,26 +70,21 @@ app.post('/api/persons', (req, res, next) => {
     person.save().then(savedPerson => {
         res.json(savedPerson);
     })
-    .catch(error => next(error));
+        .catch(error => next(error));
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
     const body = req.body;
-
-    if (!body.number) { // this is still not working correctly
-        return res.status(400).json({
-            error: 'info missing'
-        });
-    }
 
     const person = {
         name: body.name,
         number: body.number,
     };
 
-    Person.findByIdAndUpdate(req.params.id, person, { new: true})
-        .then(updatedPerson => {
-            res.json(updatedPerson);
+    Person.findByIdAndUpdate(req.params.id, person, //, runValidators: true, context: 'query'
+        { new: true, runValidators: true, context: 'query' })   // configuration object for findByIdAndUpdate: 
+        .then(updatedPerson => {                                // by default findByIdAndUpdate returns the old object, not the updated one ({ new: true } fixes this)
+            res.json(updatedPerson);                            // by default findByIdAndUpdate doesn't run validation ({ runValidators: true, context: 'query' } fixes this)
         })
         .catch(error => next(error));
 });
@@ -110,6 +99,8 @@ const errorHandler = (error, req, res, next) => { // middleware to handle bad re
 
     if (error.name === 'CastError') { // check if error is from id not compatible with MongoDB id's
         return res.status(400).json({ error: 'malformatted id' });
+    } else if (error.name === 'ValidationError') {
+        return res.status(400).json({ error: error.message });
     }
 
     next(error);    // if error is none of the above cases pass to Express default error handler

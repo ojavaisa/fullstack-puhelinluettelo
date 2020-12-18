@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const uniqueValidator = require('mongoose-unique-validator');
 
 const url = process.env.MONGODB_URI;
 
@@ -13,10 +14,14 @@ mongoose.connect(url, { useNewUrlParser: true, useUnifiedTopology: true, useFind
     });
 
 // MongoDB doesn't specify what type of documents it stores, this is done in application with mongoose 
+// Mongoose also does validation
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: String
+    name: { type: String, required: true, unique: true },
+    number: { type: String, required: true }
 });
+// Mongoose plugin to validate that person entered is unique
+personSchema.plugin(uniqueValidator);
+
 // MongoDB stores document id as an object and returns information about mongo version we don't need
 // Here we modify returned document object's toJSON method so it returns what we need
 personSchema.set('toJSON', {
