@@ -21,18 +21,21 @@ app.use(
         ':method :url :status :res[content-length] - :response-time ms :content'
     ));
 
-app.get('/info', (req, res) => { 
-    const len = people.length;
+app.get('/info', (req, res, next) => { 
+    //const len = Person.countDocuments({});
     const date = new Date();
-
-    res.send(`<p>Phonebook has info for ${len} people</p>
-        <div>${date}</div>`);
+    Person.countDocuments({}).then(len => {
+        res.send(`<p>Phonebook has info for ${len} people</p>
+        <div>${date}</div>`); 
+    })
+    .catch(error => next(error));
 });
 
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (req, res, next) => {
     Person.find({}).then(people => { // empty find method returns all documents
         res.json(people);
-    });
+    })
+    .catch(error => next(error));
 });
 
 app.get('/api/persons/:id', (req, res, next) => {
@@ -41,7 +44,7 @@ app.get('/api/persons/:id', (req, res, next) => {
             if (person) {
                 res.json(person);
             } else {    // if id is not of any document in db (but is formatted correctly), null is returned
-                res.status(404).end();
+                res.status(404).send('<div>No record found with that id</div>');
             }
         })
         .catch(error => next(error)); // if id is formatted wrong, the promise is rejected. pass error to error handler middleware
@@ -56,7 +59,7 @@ app.delete('/api/persons/:id', (req, res, next) => {
         .catch(error => next(error)); // pass errors to handler
 });
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
     const body = req.body;
 
     if (!body.name || !body.number) {
@@ -72,14 +75,15 @@ app.post('/api/persons', (req, res) => {
 
     person.save().then(savedPerson => {
         res.json(savedPerson);
-    });
+    })
+    .catch(error => next(error));
 });
 
 app.put('/api/persons/:id', (req, res, next) => {
     const body = req.body;
 
     if (!body.number) { // this is still not working correctly
-        return res.status(400).send({
+        return res.status(400).json({
             error: 'info missing'
         });
     }
@@ -97,7 +101,7 @@ app.put('/api/persons/:id', (req, res, next) => {
 });
 
 const unknownEndpoint = (req, res) => { // middleware to handle all unknown addresses (i.e. all addresses not handled above)
-    res.status(404).send({ error: 'unknown endpoint' });
+    res.status(404).json({ error: 'unknown endpoint' });
 };
 app.use(unknownEndpoint);
 
@@ -105,7 +109,7 @@ const errorHandler = (error, req, res, next) => { // middleware to handle bad re
     console.error(error.message);
 
     if (error.name === 'CastError') { // check if error is from id not compatible with MongoDB id's
-        return res.status(400).send({ error: 'malformatted id' });
+        return res.status(400).json({ error: 'malformatted id' });
     }
 
     next(error);    // if error is none of the above cases pass to Express default error handler
